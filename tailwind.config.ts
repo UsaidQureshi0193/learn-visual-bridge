@@ -17,6 +17,9 @@ export default {
 				'2xl': '1400px'
 			}
 		},
+		fontFamily: {
+			sans: ['Outfit', 'sans-serif'],
+		},
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',
@@ -52,6 +55,34 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+                // Education-themed colors
+                edu: {
+                    purple: {
+                        light: '#E5DEFF',
+                        DEFAULT: '#8B5CF6',
+                        dark: '#6E59A5'
+                    },
+                    blue: {
+                        light: '#D3E4FD',
+                        DEFAULT: '#0EA5E9',
+                        dark: '#0284C7'
+                    },
+                    orange: {
+                        light: '#FDE1D3',
+                        DEFAULT: '#F97316',
+                        dark: '#EA580C'
+                    },
+                    green: {
+                        light: '#F2FCE2',
+                        DEFAULT: '#22C55E',
+                        dark: '#16A34A'
+                    },
+                    yellow: {
+                        light: '#FEF7CD',
+                        DEFAULT: '#EAB308',
+                        dark: '#CA8A04'
+                    }
+                },
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
