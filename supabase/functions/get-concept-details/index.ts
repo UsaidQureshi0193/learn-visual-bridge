@@ -76,17 +76,45 @@ serve(async (req) => {
       })
     })
 
-    const data = await response.json()
-    const conceptData = JSON.parse(data.candidates[0].content.parts[0].text)
+    if (!response.ok) {
+      const errorData = await response.text()
+      console.error('Gemini API error:', errorData)
+      return new Response(JSON.stringify({ error: 'Error calling Gemini API', details: errorData }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
-    return new Response(JSON.stringify(conceptData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    const data = await response.json()
+    
+    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+      return new Response(JSON.stringify({ error: 'Invalid response from Gemini API' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    
+    try {
+      const conceptData = JSON.parse(data.candidates[0].content.parts[0].text)
+      
+      return new Response(JSON.stringify(conceptData), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError, data.candidates[0].content.parts[0].text)
+      return new Response(JSON.stringify({ 
+        error: 'Failed to parse Gemini API response as JSON',
+        raw: data.candidates[0].content.parts[0].text
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
   } catch (error) {
+    console.error('Server error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
-
