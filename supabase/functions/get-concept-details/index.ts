@@ -2,11 +2,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+const PERPLEXITY_API_KEY = Deno.env.get('PERPLEXITY_API_KEY')
+const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
 serve(async (req) => {
-  // CORS handling
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -14,102 +14,80 @@ serve(async (req) => {
   try {
     const { concept } = await req.json()
 
-    // Validate API key
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Gemini API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    if (!PERPLEXITY_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'Perplexity API key not configured' }), 
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    const prompt = `
-      Create a detailed educational explanation for the concept: "${concept}". 
-      Structure the response as a JSON object with the following fields:
-      {
-        "title": "The concept name",
-        "description": "A brief one-line description",
-        "difficulty": "easy/medium/hard",
-        "category": "The subject area",
-        "longDescription": "A detailed explanation",
-        "visualAnalogy": {
-          "title": "A title for the visual analogy",
-          "description": "An analogy that makes the concept easier to understand",
-          "imageUrl": "/placeholder.svg"
-        },
-        "examples": [
-          {
-            "title": "Example title",
-            "description": "Example description"
-          }
-        ],
-        "quizQuestions": [
-          {
-            "question": "Question text",
-            "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-            "correctAnswer": 0,
-            "explanation": "Why this is the correct answer"
-          }
-        ],
-        "relatedConcepts": ["related-concept-1", "related-concept-2"]
-      }
-      Make it educational and suitable for students aged 14-22.
-    `
-
-    const response = await fetch(GEMINI_API_URL, {
+    const response = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
         'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY,
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
-        },
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'Create educational content in JSON format.'
+          },
+          {
+            role: 'user',
+            content: `Create a detailed educational explanation for: "${concept}". 
+            Structure it as JSON with these fields:
+            {
+              "title": "concept name",
+              "description": "brief description",
+              "difficulty": "easy/medium/hard",
+              "category": "subject area",
+              "longDescription": "detailed explanation",
+              "visualAnalogy": {
+                "title": "visual analogy title",
+                "description": "analogy description",
+                "imageUrl": "/placeholder.svg"
+              },
+              "examples": [
+                {
+                  "title": "Example title",
+                  "description": "Example description"
+                }
+              ],
+              "quizQuestions": [
+                {
+                  "question": "Question text",
+                  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+                  "correctAnswer": 0,
+                  "explanation": "Answer explanation"
+                }
+              ],
+              "relatedConcepts": ["related-concept-1", "related-concept-2"]
+            }`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
       })
     })
 
     if (!response.ok) {
       const errorData = await response.text()
-      console.error('Gemini API error:', errorData)
-      return new Response(JSON.stringify({ error: 'Error calling Gemini API', details: errorData }), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      console.error('Perplexity API error:', errorData)
+      return new Response(
+        JSON.stringify({ error: 'Error calling Perplexity API', details: errorData }), 
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const data = await response.json()
+    const conceptData = JSON.parse(data.choices[0].message.content)
     
-    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-      return new Response(JSON.stringify({ error: 'Invalid response from Gemini API' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    
-    try {
-      const conceptData = JSON.parse(data.candidates[0].content.parts[0].text)
-      
-      return new Response(JSON.stringify(conceptData), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError, data.candidates[0].content.parts[0].text)
-      return new Response(JSON.stringify({ 
-        error: 'Failed to parse Gemini API response as JSON',
-        raw: data.candidates[0].content.parts[0].text
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    return new Response(JSON.stringify(conceptData), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+
   } catch (error) {
     console.error('Server error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
