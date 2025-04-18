@@ -6,26 +6,21 @@ import QuizSection from "@/components/QuizSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Share2, Bookmark, BookmarkCheck, ArrowLeft, Send, Key } from "lucide-react";
+import { BookOpen, Share2, Bookmark, BookmarkCheck, ArrowLeft, Send } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useConceptData } from "@/hooks/useConceptData";
 import { useToast } from "@/components/ui/use-toast";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const ConceptDetails = () => {
   const { slug } = useParams<{ slug: string }>();
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem("gemini_api_key") || "");
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!localStorage.getItem("gemini_api_key"));
   const { toast } = useToast();
   
   const { 
     data: conceptData, 
     isLoading, 
-    error,
-    refetch 
+    error
   } = useConceptData(slug || "");
   
   const handleBookmark = () => {
@@ -35,71 +30,6 @@ const ConceptDetails = () => {
       duration: 2000,
     });
   };
-
-  const handleApiKeySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    localStorage.setItem("gemini_api_key", apiKey);
-    setShowApiKeyInput(false);
-    refetch();
-    toast({
-      title: "API key saved",
-      description: "Your Gemini API key has been saved for this session.",
-      duration: 3000,
-    });
-  };
-
-  const handleResetApiKey = () => {
-    setShowApiKeyInput(true);
-  };
-
-  if (showApiKeyInput) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center p-6">
-          <Card className="w-full max-w-md">
-            <CardContent className="pt-6">
-              <div className="mb-4 text-center">
-                <Key className="h-12 w-12 text-edu-purple mx-auto mb-2" />
-                <h2 className="text-2xl font-bold">API Key Required</h2>
-                <p className="text-muted-foreground mt-2">
-                  Please enter your Gemini API key to fetch concept details.
-                </p>
-              </div>
-              
-              <form onSubmit={handleApiKeySubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey">Gemini API Key</Label>
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter your Gemini API key"
-                    className="w-full"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Your API key is stored locally and never sent to our servers.
-                  </p>
-                </div>
-                <Button type="submit" className="w-full">
-                  Save API Key
-                </Button>
-              </form>
-              
-              <div className="mt-4 text-center">
-                <p className="text-xs text-muted-foreground">
-                  Don't have a Gemini API key? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-edu-purple hover:underline">Get one here</a>.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -125,12 +55,9 @@ const ConceptDetails = () => {
             <CardContent className="p-6">
               <h2 className="text-xl font-medium mb-4">Error Loading Concept</h2>
               <p className="text-muted-foreground mb-4">
-                We couldn't load the concept details. This might be due to an invalid API key.
+                We couldn't load the concept details. Please try again later.
               </p>
-              <Button className="w-full" onClick={handleResetApiKey}>
-                <Key className="h-4 w-4 mr-2" /> Update API Key
-              </Button>
-              <Button className="mt-4 w-full" variant="outline" asChild>
+              <Button className="w-full" variant="outline" asChild>
                 <Link to="/search">Back to Search</Link>
               </Button>
             </CardContent>

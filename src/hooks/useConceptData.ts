@@ -2,11 +2,10 @@
 import { useQuery } from "@tanstack/react-query";
 
 const fetchConceptData = async (slug: string) => {
-  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-concept-details`, {
+  const response = await fetch('https://ehhpgbylbplcgujeohpd.supabase.co/functions/v1/gemini-api-integration', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
     },
     body: JSON.stringify({ concept: slug.split('-').join(' ') })
   });
@@ -22,7 +21,7 @@ export const useConceptData = (slug: string) => {
   return useQuery({
     queryKey: ['concept', slug],
     queryFn: () => fetchConceptData(slug),
-    enabled: !!slug && !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+    enabled: !!slug,
     retry: false,
   });
 };
