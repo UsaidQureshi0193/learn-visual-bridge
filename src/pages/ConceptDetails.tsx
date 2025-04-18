@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,115 +9,64 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Share2, Bookmark, BookmarkCheck, ArrowLeft, Send } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
-// Sample data based on slug
-const getConceptData = (slug: string) => {
-  // In a real application, this would fetch from API
-  const concepts = {
-    "quantum-superposition": {
-      title: "Quantum Superposition",
-      description: "Understanding how particles can exist in multiple states simultaneously.",
-      difficulty: "hard",
-      category: "Physics",
-      longDescription: "Quantum superposition is a fundamental principle of quantum mechanics that states that a physical system—such as an electron—exists partly in all its particular, theoretically possible states simultaneously, but, when measured, gives a result corresponding to only one of the possible configurations.",
-      visualAnalogy: {
-        title: "The Spinning Coin Analogy",
-        description: "Think of a spinning coin on a table. While it's spinning, is it heads or tails? In a way, it's both at the same time until it stops spinning and falls to one side. Quantum particles are similar—they exist in multiple states simultaneously until they're observed or measured.",
-        imageUrl: "/placeholder.svg"
-      },
-      examples: [
-        {
-          title: "Schrödinger's Cat",
-          description: "The famous thought experiment where a cat in a box is both alive and dead simultaneously until observed, demonstrating the concept of superposition in macroscopic terms."
-        },
-        {
-          title: "Electron Orbitals",
-          description: "Electrons in atoms don't follow specific paths but exist as probability clouds, being in multiple positions simultaneously until measured."
-        },
-        {
-          title: "Quantum Computing",
-          description: "Quantum computers use superposition to perform calculations with qubits that can be both 0 and 1 simultaneously, enabling parallel processing."
-        }
-      ],
-      quizQuestions: [
-        {
-          question: "What happens to a quantum particle in superposition when it is measured?",
-          options: [
-            "It continues to exist in multiple states",
-            "It collapses into one definite state",
-            "It disappears completely",
-            "It splits into multiple particles"
-          ],
-          correctAnswer: 1,
-          explanation: "When measured, a quantum particle in superposition collapses into just one of its possible states. This is known as wavefunction collapse."
-        },
-        {
-          question: "Which of the following best describes quantum superposition?",
-          options: [
-            "Particles moving at super high speeds",
-            "Particles existing in multiple states simultaneously",
-            "Particles changing from one state to another",
-            "Particles with super high energy"
-          ],
-          correctAnswer: 1,
-          explanation: "Quantum superposition describes how particles can exist in multiple states simultaneously until they are observed or measured."
-        },
-        {
-          question: "Which technology directly utilizes quantum superposition?",
-          options: [
-            "Solar panels",
-            "Conventional computers",
-            "Quantum computers",
-            "Microwave ovens"
-          ],
-          correctAnswer: 2,
-          explanation: "Quantum computers use qubits that can be in superposition, allowing them to perform certain calculations much faster than classical computers."
-        }
-      ],
-      relatedConcepts: ["quantum-entanglement", "wave-particle-duality", "uncertainty-principle"]
-    },
-    // More concepts would be defined here...
-    "default": {
-      title: "Concept Not Found",
-      description: "The concept you're looking for doesn't exist in our database yet.",
-      difficulty: "medium",
-      category: "General",
-      longDescription: "We're constantly adding new concepts to our database. Please check back later or search for a different concept.",
-      visualAnalogy: {
-        title: "No Visual Analogy Available",
-        description: "We don't have a visual analogy for this concept yet.",
-        imageUrl: "/placeholder.svg"
-      },
-      examples: [
-        {
-          title: "No Examples Available",
-          description: "We don't have examples for this concept yet."
-        }
-      ],
-      quizQuestions: [
-        {
-          question: "Sample question?",
-          options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-          correctAnswer: 0,
-          explanation: "This is a sample explanation."
-        }
-      ],
-      relatedConcepts: []
-    }
-  };
-
-  return concepts[slug as keyof typeof concepts] || concepts.default;
-};
+import { useConceptData } from "@/hooks/useConceptData";
+import { useToast } from "@/components/ui/use-toast";
 
 const ConceptDetails = () => {
   const { slug } = useParams<{ slug: string }>();
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const { toast } = useToast();
   
-  const conceptData = getConceptData(slug || "");
+  const { data: conceptData, isLoading, error } = useConceptData(slug || "");
   
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
+    toast({
+      title: isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
+      duration: 2000,
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse flex flex-col items-center gap-4">
+            <div className="h-8 w-64 bg-muted rounded"></div>
+            <div className="h-4 w-48 bg-muted rounded"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-xl font-medium mb-4">Error Loading Concept</h2>
+              <p className="text-muted-foreground">
+                We couldn't load the concept details. Please try again later.
+              </p>
+              <Button className="mt-4" asChild>
+                <Link to="/search">Back to Search</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!conceptData) {
+    return null;
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
