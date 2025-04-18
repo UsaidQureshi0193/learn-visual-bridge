@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Share2, Bookmark, BookmarkCheck, ArrowLeft, Send, Key } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useConceptData } from "@/hooks/useConceptData";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,7 +26,7 @@ const ConceptDetails = () => {
     isLoading, 
     error,
     refetch 
-  } = useConceptData(slug || "", apiKey);
+  } = useConceptData(slug || "");
   
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
@@ -306,4 +305,3 @@ const ConceptDetails = () => {
 };
 
 export default ConceptDetails;
-
